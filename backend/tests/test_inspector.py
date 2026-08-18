@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from app.agent.inspector import read_repository_files
 from app.agent.inspector import (
     detect_file_extensions,
     find_important_files,
@@ -86,3 +87,19 @@ def test_detect_file_extensions(tmp_path: Path) -> None:
     extensions = detect_file_extensions(str(repo))
 
     assert extensions[".py"] == 3
+
+def test_read_repository_files(tmp_path: Path) -> None:
+    calculator = tmp_path / "calculator.py"
+
+    calculator.write_text(
+        "def add(a, b):\n"
+        "    return a - b\n"
+    )
+
+    result = read_repository_files(
+        str(tmp_path),
+        ["calculator.py"],
+    )
+
+    assert "calculator.py" in result
+    assert "return a - b" in result["calculator.py"]

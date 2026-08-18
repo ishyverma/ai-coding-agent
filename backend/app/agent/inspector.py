@@ -122,3 +122,47 @@ def detect_file_extensions(repo_path: str) -> dict[str, int]:
         extensions[suffix] = extensions.get(suffix, 0) + 1
 
     return dict(sorted(extensions.items()))
+
+def read_repository_files(
+    repo_path: str,
+    files: list[str],
+    max_file_size: int = 50_000,
+) -> dict[str, str]:
+    """
+    Read the contents of selected repository files.
+
+    Large files are skipped to avoid sending excessive
+    source code to the LLM.
+    """
+
+    repo = Path(repo_path).resolve()
+
+    contents: dict[str, str] = {}
+
+    for relative_path in files:
+        file_path = (
+            repo / relative_path
+        ).resolve()
+
+        # Prevent path traversal.
+        try:
+            file_path.relative_to(repo)
+        except ValueError:
+            continue
+
+        if not file_path.is_file():
+            continue
+
+        if file_path.stat().st_size > max_file_size:
+            continue
+
+        try:
+            contents[relative_path] = (
+                file_path.read_text(
+                    encoding="utf-8"
+                )
+            )
+        except UnicodeDecodeError:
+            continue
+
+    return contents

@@ -4,6 +4,7 @@ from app.agent.nodes import (
     analyze_task_node,
     inspect_repository_node,
     modify_code_node,
+    recovery_node,
     route_after_tests,
     run_tests_node,
     setup_repository_node,
@@ -42,6 +43,11 @@ def build_agent_graph():
         run_tests_node,
     )
 
+    graph.add_node(
+        "recovery",
+        recovery_node,
+    )
+
     # ── Linear workflow ──────────────────────────────────────────────────────
     graph.add_edge(
         START,
@@ -73,10 +79,15 @@ def build_agent_graph():
         "run_tests",
         route_after_tests,
         {
-            "analyze": "analyze",
+            "analyze": "recovery",
             "done": END,
             "failed": END,
         },
+    )
+
+    graph.add_edge(
+        "recovery",
+        "analyze",
     )
 
     return graph.compile()

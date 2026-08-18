@@ -1,5 +1,6 @@
 from langchain_groq import ChatGroq
 
+from app.agent.schemas import CodeChangePlan
 from app.config import settings
 
 def create_llm() -> ChatGroq:
@@ -23,4 +24,26 @@ def ask_llm(prompt: str) -> str:
     response = llm.invoke(prompt)
 
     return response.content
+
+def create_structured_llm():
+    """
+    Create an LLM configured to return structured code changes.
+    """
+
+    llm = create_llm()
+
+    return llm.with_structured_output(
+        CodeChangePlan
+    )
+
+def generate_code_change_plan(
+    prompt: str,
+) -> CodeChangePlan:
+    """
+    Ask the LLM for a validated code change plan.
+    """
+
+    llm = create_structured_llm()
+
+    return llm.invoke(prompt)
 

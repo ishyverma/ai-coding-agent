@@ -2,34 +2,33 @@ from typing import TypedDict
 
 
 class AgentState(TypedDict, total=False):
-    """
-    Shared state passed between LangGraph agent nodes.
-    """
+    """Shared state passed between LangGraph agent nodes."""
 
-    # ── Task information ──────────────────────────────────────────────────────
+    # Task information
     task_id: int
     repo_url: str
     task_text: str
 
-    # ── Repository information ────────────────────────────────────────────────
+    # Repository information
     repo_path: str
     repository_files: list[str]
     test_files: list[str]
     important_files: list[str]
     file_extensions: dict[str, int]
+    repository_contents: dict[str, str]
 
-    # ── Agent reasoning ────────────────────────────────────────────────────────
+    # Agent reasoning
     analysis: str
     proposed_changes: str
 
-    # ── Execution information ─────────────────────────────────────────────────
+    # Execution information
     test_command: str
     test_output: str
     tests_passed: bool
 
-    # ── Retry information ──────────────────────────────────────────────────────
+    # Retry information
     attempt_count: int
     max_attempts: int
 
-    # ── Error information ─────────────────────────────────────────────────────
+    # Error information
     error: str
