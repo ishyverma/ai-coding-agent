@@ -14,6 +14,9 @@ class AgentState(TypedDict, total=False):
     # ── Repository information ────────────────────────────────────────────────
     repo_path: str
     repository_files: list[str]
+    test_files: list[str]
+    important_files: list[str]
+    file_extensions: dict[str, int]
 
     # ── Agent reasoning ────────────────────────────────────────────────────────
     analysis: str
