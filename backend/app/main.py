@@ -3,6 +3,7 @@ from typing import AsyncGenerator
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
 
 from app import crud
 from app.config import settings
@@ -115,6 +116,14 @@ def create_app() -> FastAPI:
         """
 
         return {"status": "ok", "version": "1.0.0", "env": settings.app_env}
+
+    @app.post("/admin/clean-db", tags=["admin"])
+    def clean_database() -> dict[str, str]:
+        """Truncate all tables. Temporary endpoint for database cleanup."""
+        with engine.connect() as conn:
+            conn.execute(text("TRUNCATE TABLE run_logs, runs, tasks, eval_results RESTART IDENTITY CASCADE"))
+            conn.commit()
+        return {"status": "ok", "message": "All tables truncated."}
 
     return app
 
