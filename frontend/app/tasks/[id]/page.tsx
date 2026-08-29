@@ -51,7 +51,7 @@ export default function TaskDetailPage() {
 
   if (taskLoading || !task) {
     return (
-      <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <Card>
           <CardContent className="p-5 text-sm text-muted-foreground">
             Loading task...
@@ -64,13 +64,14 @@ export default function TaskDetailPage() {
   const latestRun = runs?.[0] ?? null;
 
   return (
-    <main className="mx-auto min-h-screen max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+    <main className="mx-auto min-h-screen max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+      {/* Header */}
       <div className="mb-6 flex flex-col gap-4 border-b pb-5 sm:flex-row sm:items-end sm:justify-between">
-        <div>
+        <div className="min-w-0">
           <Link href="/" className={buttonVariants({ variant: "ghost" })}>
             Back
           </Link>
-          <h1 className="mt-4 text-3xl font-semibold tracking-normal">
+          <h1 className="mt-4 text-2xl font-semibold tracking-normal sm:text-3xl">
             Task #{task.id}
           </h1>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
@@ -82,50 +83,44 @@ export default function TaskDetailPage() {
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
-        <section className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="break-words text-xl leading-8">
-                {task.task_text}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <p className="text-xs font-medium text-muted-foreground">
-                  Repository
-                </p>
-                <p className="mt-1 break-all text-sm leading-6 text-foreground">
-                  {task.repo_url}
-                </p>
-              </div>
-              {error && <p className="text-sm text-destructive">{error}</p>}
-              <Button
-                onClick={() => triggerRun.mutate()}
-                disabled={triggerRun.isPending || task.status === "running"}
-              >
-                {triggerRun.isPending ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Starting...
-                  </>
-                ) : task.status === "running" ? (
-                  "Agent already running"
-                ) : (
-                  <>
-                    <Play className="mr-2 h-4 w-4" />
-                    Run Agent
-                  </>
-                )}
-              </Button>
-            </CardContent>
-          </Card>
-
-          <section>
-            <h2 className="mb-3 text-base font-semibold">Live Logs</h2>
-            <LogViewer runId={streamRunId ?? (latestRun?.id ?? null)} />
-          </section>
-        </section>
+      {/* Task card + Runs row (side by side on desktop, stacked on mobile) */}
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+        <Card>
+          <CardHeader className="p-4 sm:p-6">
+            <CardTitle className="break-words text-lg leading-7 sm:text-xl sm:leading-8">
+              {task.task_text}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4 p-4 pt-0 sm:p-6 sm:pt-0">
+            <div>
+              <p className="text-xs font-medium text-muted-foreground">
+                Repository
+              </p>
+              <p className="mt-1 break-all text-sm leading-6 text-foreground">
+                {task.repo_url}
+              </p>
+            </div>
+            {error && <p className="text-sm text-destructive">{error}</p>}
+            <Button
+              onClick={() => triggerRun.mutate()}
+              disabled={triggerRun.isPending || task.status === "running"}
+            >
+              {triggerRun.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Starting...
+                </>
+              ) : task.status === "running" ? (
+                "Agent already running"
+              ) : (
+                <>
+                  <Play className="mr-2 h-4 w-4" />
+                  Run Agent
+                </>
+              )}
+            </Button>
+          </CardContent>
+        </Card>
 
         <aside>
           <h2 className="mb-3 text-base font-semibold">Runs</h2>
@@ -147,7 +142,7 @@ export default function TaskDetailPage() {
                 <Card key={run.id}>
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between gap-3">
-                      <div>
+                      <div className="min-w-0">
                         <p className="text-sm font-medium">Run #{run.id}</p>
                         <p className="mt-1 text-xs leading-5 text-muted-foreground">
                           {new Date(run.created_at).toLocaleString()}
@@ -190,6 +185,12 @@ export default function TaskDetailPage() {
           )}
         </aside>
       </div>
+
+      {/* Live Logs — full width */}
+      <section className="mt-6">
+        <h2 className="mb-3 text-base font-semibold">Live Logs</h2>
+        <LogViewer runId={streamRunId ?? (latestRun?.id ?? null)} />
+      </section>
     </main>
   );
 }

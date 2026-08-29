@@ -331,7 +331,7 @@ export function LogViewer({ runId }: { runId: number | null }) {
   }
 
   return (
-    <div className="rounded-lg border border-zinc-800 bg-zinc-950 p-4 font-mono text-sm">
+    <div className="rounded-lg border border-zinc-800 bg-zinc-950 p-3 font-mono text-xs sm:p-4 sm:text-sm">
       <div className="mb-3 flex items-center justify-between border-b border-zinc-800 pb-3">
         <span className="text-xs text-zinc-500">
           {error
@@ -351,7 +351,7 @@ export function LogViewer({ runId }: { runId: number | null }) {
         )}
       </div>
 
-      <div className="space-y-4 overflow-y-auto pb-2" style={{ maxHeight: "80vh" }}>
+      <div className="max-h-[60vh] space-y-3 overflow-y-auto pb-2 sm:space-y-4 sm:max-h-[70vh] lg:max-h-[80vh]">
         {logs.length === 0 && (
           <p className="text-xs text-zinc-600">
             Waiting for the agent to start...
