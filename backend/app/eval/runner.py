@@ -86,14 +86,18 @@ class EvalRunner:
         return results
 
     def _run_one(self, task_def: dict) -> TaskResult:
-        """Clone the repo, run the agent, return the result."""
+        """Clone or copy the repo, run the agent, return the result."""
 
         repo_path = Path(tempfile.mkdtemp())
         start = time.time()
 
         try:
             repo_url = self._resolve_repo_url(task_def["repo_url"])
-            git.Repo.clone_from(repo_url, str(repo_path))
+            src = Path(repo_url)
+            if src.is_dir():
+                shutil.copytree(str(src), str(repo_path))
+            else:
+                git.Repo.clone_from(repo_url, str(repo_path))
 
             graph = build_agent_graph()
 
