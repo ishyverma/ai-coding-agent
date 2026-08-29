@@ -95,7 +95,7 @@ class EvalRunner:
             repo_url = self._resolve_repo_url(task_def["repo_url"])
             src = Path(repo_url)
             if src.is_dir():
-                shutil.copytree(str(src), str(repo_path))
+                shutil.copytree(str(src), str(repo_path), dirs_exist_ok=True)
             else:
                 git.Repo.clone_from(repo_url, str(repo_path))
 
