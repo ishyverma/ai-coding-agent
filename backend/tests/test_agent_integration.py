@@ -1,9 +1,10 @@
 from pathlib import Path
 from unittest.mock import patch
 
+import pytest
+
 from app.agent.schemas import (
     CodeChangePlan,
-    FileChange,
 )
 from app.agent.graph import build_agent_graph
 from app.agent.state import AgentState
@@ -23,6 +24,7 @@ def create_initial_state(
     }
 
 
+@pytest.mark.integration
 def test_agent_graph_successful_run(tmp_path: Path) -> None:
     """The graph should complete when tests pass."""
 
@@ -43,9 +45,7 @@ def test_agent_graph_successful_run(tmp_path: Path) -> None:
         ),
         patch(
             "app.agent.nodes.apply_file_changes",
-            return_value=[
-                fake_repo / "src" / "main.py"
-            ],
+            return_value=[fake_repo / "src" / "main.py"],
         ),
         patch(
             "app.agent.nodes.run_command",
@@ -59,15 +59,14 @@ def test_agent_graph_successful_run(tmp_path: Path) -> None:
 
         graph = build_agent_graph()
 
-        state = graph.invoke(
-            create_initial_state()
-        )
+        state = graph.invoke(create_initial_state())
 
     assert state["tests_passed"] is True
     assert state["test_output"] == "1 passed"
     assert state["attempt_count"] == 1
 
 
+@pytest.mark.integration
 def test_agent_graph_retries_after_failure(
     tmp_path: Path,
 ) -> None:
@@ -81,7 +80,7 @@ def test_agent_graph_retries_after_failure(
             "app.agent.nodes.clone_repository",
             return_value=fake_repo,
         ),
-       patch(
+        patch(
             "app.agent.nodes.generate_code_change_plan",
             return_value=CodeChangePlan(
                 changes=[],
@@ -127,9 +126,7 @@ def test_agent_graph_retries_after_failure(
 
         graph = build_agent_graph()
 
-        state = graph.invoke(
-            create_initial_state()
-        )
+        state = graph.invoke(create_initial_state())
 
     assert state["tests_passed"] is True
     assert state["attempt_count"] == 2
@@ -137,6 +134,7 @@ def test_agent_graph_retries_after_failure(
     assert mock_run_command.call_count == 2
 
 
+@pytest.mark.integration
 def test_agent_graph_stops_after_max_attempts(
     tmp_path: Path,
 ) -> None:

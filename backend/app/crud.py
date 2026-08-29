@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -24,9 +26,7 @@ def create_task(db: Session, task_data: TaskCreate) -> models.Task:
 def get_task(db: Session, task_id: int) -> models.Task | None:
     """Get one task by its ID."""
 
-    statement = select(models.Task).where(
-        models.Task.id == task_id
-    )
+    statement = select(models.Task).where(models.Task.id == task_id)
 
     return db.scalar(statement)
 
@@ -74,9 +74,7 @@ def get_run(
 ) -> models.Run | None:
     """Get one run by its ID."""
 
-    statement = select(models.Run).where(
-        models.Run.id == run_id
-    )
+    statement = select(models.Run).where(models.Run.id == run_id)
 
     return db.scalar(statement)
 
@@ -139,6 +137,7 @@ def create_run_log(
     step: str,
     message: str,
     level: str = "info",
+    diff: str | None = None,
 ) -> models.RunLog:
     """Create one log entry for an agent run."""
 
@@ -147,6 +146,7 @@ def create_run_log(
         step=step,
         level=level,
         message=message,
+        diff=diff,
     )
 
     db.add(log)
@@ -184,3 +184,69 @@ def update_task_status(
     db.refresh(task)
 
     return task
+
+
+def mark_interrupted_runs_failed(db: Session) -> int:
+    """
+    Mark in-progress runs as failed after a server restart.
+
+    BackgroundTasks are process-local. If the server stops while a run is
+    active, that run cannot resume, so keeping it running blocks the task.
+    """
+
+    runs = list(db.scalars(select(models.Run).where(models.Run.status == "running")))
+
+    for run in runs:
+        run.status = "failed"
+        run.error_msg = "Server restarted before this run completed."
+        run.completed_at = datetime.utcnow()
+
+        task = db.get(models.Task, run.task_id)
+
+        if task is not None and task.status == "running":
+            task.status = "failed"
+
+    db.commit()
+
+    return len(runs)
+
+
+def create_eval_result(
+    db: Session,
+    eval_name: str,
+    total: int,
+    passed: int,
+    failed: int,
+    pass_rate: float,
+    avg_attempts: float,
+    avg_tokens: float,
+    avg_duration_s: float,
+) -> models.EvalResult:
+    """Create one aggregate eval result."""
+
+    result = models.EvalResult(
+        eval_name=eval_name,
+        total_tasks=total,
+        passed=passed,
+        failed=failed,
+        pass_rate=pass_rate,
+        avg_attempts=avg_attempts,
+        avg_tokens=avg_tokens,
+        avg_duration_s=avg_duration_s,
+    )
+
+    db.add(result)
+    db.commit()
+    db.refresh(result)
+
+    return result
+
+
+def list_eval_results(
+    db: Session,
+) -> list[models.EvalResult]:
+    """Return all eval results, newest first."""
+
+    statement = select(models.EvalResult).order_by(models.EvalResult.run_at.desc())
+
+    return list(db.scalars(statement).all())

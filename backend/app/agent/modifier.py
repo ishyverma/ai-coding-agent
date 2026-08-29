@@ -22,9 +22,7 @@ def validate_file_path(
     try:
         target.relative_to(repo_root)
     except ValueError as exc:
-        raise UnsafeFilePathError(
-            f"File path escapes repository: {file_path}"
-        ) from exc
+        raise UnsafeFilePathError(f"File path escapes repository: {file_path}") from exc
 
     return target
 

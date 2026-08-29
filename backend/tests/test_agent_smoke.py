@@ -5,24 +5,16 @@ import pytest
 
 from app.agent.graph import build_agent_graph
 from app.agent.state import AgentState
-from app.agent.graph import build_agent_graph
 from app.agent.schemas import CodeChangePlan, FileChange
-from app.agent.state import AgentState
 
 
-FIXTURE_REPO = (
-    Path(__file__).parent
-    / "fixtures"
-    / "broken_repo"
-)
+FIXTURE_REPO = Path(__file__).parent / "fixtures" / "broken_repo"
 
 
 def test_smoke_repository_exists() -> None:
     assert FIXTURE_REPO.exists()
     assert (FIXTURE_REPO / "calculator.py").exists()
-    assert (
-        FIXTURE_REPO / "tests" / "test_calculator.py"
-    ).exists()
+    assert (FIXTURE_REPO / "tests" / "test_calculator.py").exists()
 
 
 def test_agent_can_fix_broken_repository(
@@ -38,10 +30,7 @@ def test_agent_can_fix_broken_repository(
     initial_state: AgentState = {
         "repo_path": str(repo),
         "repo_url": "",
-        "task_text": (
-            "Fix the add function so that it "
-            "correctly adds two numbers."
-        ),
+        "task_text": ("Fix the add function so that it " "correctly adds two numbers."),
         "max_attempts": 3,
         "attempt_count": 0,
     }
@@ -59,6 +48,9 @@ def test_agent_can_fix_broken_repository(
     )
 
     with patch(
+        "app.agent.nodes.ask_llm",
+        return_value="calculator.py uses multiplication where addition is required.",
+    ), patch(
         "app.agent.nodes.generate_code_change_plan",
         return_value=plan,
     ):
@@ -76,6 +68,7 @@ def test_agent_can_fix_broken_repository(
 """
     )
 
+
 def test_agent_recovers_from_failed_change(
     tmp_path: Path,
 ) -> None:
@@ -89,10 +82,7 @@ def test_agent_recovers_from_failed_change(
     initial_state: AgentState = {
         "repo_path": str(repo),
         "repo_url": "",
-        "task_text": (
-            "Fix the add function so that it "
-            "correctly adds two numbers."
-        ),
+        "task_text": ("Fix the add function so that it " "correctly adds two numbers."),
         "max_attempts": 3,
         "attempt_count": 0,
     }
@@ -122,6 +112,9 @@ def test_agent_recovers_from_failed_change(
     )
 
     with patch(
+        "app.agent.nodes.ask_llm",
+        return_value="calculator.py still needs the add function corrected.",
+    ), patch(
         "app.agent.nodes.generate_code_change_plan",
         side_effect=[
             bad_plan,
@@ -188,14 +181,10 @@ def test_real_llm_can_fix_broken_repository(
     print(state.get("error"))
 
     print("\nFinal calculator.py:")
-    print(
-        (repo / "calculator.py").read_text()
-    )
+    print((repo / "calculator.py").read_text())
     print("=================================\n")
     assert state["attempt_count"] <= 3
 
-    calculator = (
-        repo / "calculator.py"
-    ).read_text()
+    calculator = (repo / "calculator.py").read_text()
 
     assert "return a + b" in calculator

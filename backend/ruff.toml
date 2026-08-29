@@ -1,0 +1,7 @@
+line-length = 88
+
+extend-exclude = ["app/eval/fixtures/repos"]
+
+[lint.per-file-ignores]
+# Eval fixture repos contain intentional bugs for the agent to fix.
+"app/eval/fixtures/repos/*.py" = ["F821", "F841"]

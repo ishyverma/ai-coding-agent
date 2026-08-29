@@ -1,0 +1,6 @@
+{
+  "name": "add_missing_function",
+  "description": "Add the missing is_even function to math_helpers.py. The function should return True if the number is even, False otherwise. Make all tests in test_math_helpers.py pass.",
+  "repo_url": "repos/add_missing_function",
+  "difficulty": "medium"
+}

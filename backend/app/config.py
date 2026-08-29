@@ -2,7 +2,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings, SettingsConfigDict  # noqa: E402
+
 
 class Settings(BaseSettings):
     """
@@ -14,13 +15,12 @@ class Settings(BaseSettings):
     """
 
     model_config = SettingsConfigDict(
-        env_file=".env",
-        env_file_encoding="utf-8",
-        case_sensitive=False
+        env_file=".env", env_file_encoding="utf-8", case_sensitive=False
     )
 
     # LLM
     groq_api_key: str
+    groq_model: str = "openai/gpt-oss-120b"
 
     # LangSmith
     langsmith_tracing: bool = False
@@ -41,6 +41,7 @@ class Settings(BaseSettings):
     @property
     def is_production(self) -> bool:
         return self.app_env == "production"
+
 
 # Created one shared settings instance
 settings = Settings()

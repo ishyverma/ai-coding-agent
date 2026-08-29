@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, field_validator
 
 
 class TaskCreate(BaseModel):
@@ -8,6 +8,20 @@ class TaskCreate(BaseModel):
 
     repo_url: str
     task_text: str
+
+    @field_validator("task_text")
+    @classmethod
+    def task_text_not_empty(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("task_text cannot be empty")
+        return value.strip()
+
+    @field_validator("repo_url")
+    @classmethod
+    def repo_url_not_empty(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("repo_url cannot be empty")
+        return value.strip()
 
 
 class TaskResponse(BaseModel):
@@ -48,7 +62,16 @@ class RunLogResponse(BaseModel):
     step: str
     level: str
     message: str
+    diff: str | None = None
     created_at: datetime
+
+
+class RunTriggerResponse(BaseModel):
+    """Response returned when a run is triggered on a task."""
+
+    run_id: int
+    status: str = "started"
+    message: str = "Agent started. Connect to /runs/{run_id}/stream " "for live logs."
 
 
 class EvalResultResponse(BaseModel):

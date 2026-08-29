@@ -1,0 +1,6 @@
+{
+  "name": "fix_off_by_one",
+  "description": "Fix the IndexError in list_utils.py. The last_element function accesses the wrong index. Make all tests in test_list_utils.py pass.",
+  "repo_url": "repos/fix_off_by_one",
+  "difficulty": "easy"
+}

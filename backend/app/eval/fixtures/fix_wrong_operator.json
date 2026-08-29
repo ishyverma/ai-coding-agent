@@ -1,0 +1,6 @@
+{
+  "name": "fix_wrong_operator",
+  "description": "Fix the comparison operator in grade_checker.py. The is_passing function uses > but should use >= because a score of 60 is passing. Make all tests pass.",
+  "repo_url": "repos/fix_wrong_operator",
+  "difficulty": "easy"
+}

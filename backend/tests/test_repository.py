@@ -7,6 +7,7 @@ from app.agent.repository import (
     create_work_directory,
 )
 
+
 def test_clone_repository(tmp_path: Path) -> None:
     source_repo = tmp_path / "source"
     source_repo.mkdir()

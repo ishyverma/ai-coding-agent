@@ -65,10 +65,10 @@ def test_apply_multiple_file_changes(
 
     assert len(modified_files) == 2
 
-    assert (
-        tmp_path / "src" / "main.py"
-    ).read_text(encoding="utf-8") == "print('hello')"
+    assert (tmp_path / "src" / "main.py").read_text(
+        encoding="utf-8"
+    ) == "print('hello')"
 
-    assert (
-        tmp_path / "tests" / "test_main.py"
-    ).read_text(encoding="utf-8") == "def test_main(): pass"
+    assert (tmp_path / "tests" / "test_main.py").read_text(
+        encoding="utf-8"
+    ) == "def test_main(): pass"

@@ -25,6 +25,10 @@ IMPORTANT_FILES = {
     "package.json",
     "package-lock.json",
     "tsconfig.json",
+    "go.mod",
+    "go.sum",
+    "Cargo.toml",
+    "Makefile",
     "Dockerfile",
     "docker-compose.yml",
     "docker-compose.yaml",
@@ -40,14 +44,10 @@ def list_repository_files(repo_path: str) -> list[str]:
     root = Path(repo_path)
 
     if not root.exists():
-        raise FileNotFoundError(
-            f"Repository path does not exist: {repo_path}"
-        )
+        raise FileNotFoundError(f"Repository path does not exist: {repo_path}")
 
     if not root.is_dir():
-        raise NotADirectoryError(
-            f"Repository path is not a directory: {repo_path}"
-        )
+        raise NotADirectoryError(f"Repository path is not a directory: {repo_path}")
 
     files: list[str] = []
 
@@ -58,10 +58,7 @@ def list_repository_files(repo_path: str) -> list[str]:
         relative_path = path.relative_to(root)
 
         # Ignore files inside excluded directories.
-        if any(
-            part in IGNORED_DIRECTORIES
-            for part in relative_path.parts
-        ):
+        if any(part in IGNORED_DIRECTORIES for part in relative_path.parts):
             continue
 
         files.append(relative_path.as_posix())
@@ -84,6 +81,14 @@ def find_test_files(repo_path: str) -> list[str]:
             or "/tests/" in path
             or Path(path).name.startswith("test_")
             or Path(path).name.endswith("_test.py")
+            or Path(path).name.endswith("_test.go")
+            or Path(path).name.endswith("_test.rs")
+            or Path(path).name.endswith(
+                (".test.ts", ".test.tsx", ".test.js", ".test.jsx")
+            )
+            or Path(path).name.endswith(
+                (".spec.ts", ".spec.tsx", ".spec.js", ".spec.jsx")
+            )
         )
     ]
 
@@ -97,11 +102,7 @@ def find_important_files(repo_path: str) -> list[str]:
 
     files = list_repository_files(repo_path)
 
-    return sorted(
-        path
-        for path in files
-        if Path(path).name in IMPORTANT_FILES
-    )
+    return sorted(path for path in files if Path(path).name in IMPORTANT_FILES)
 
 
 def detect_file_extensions(repo_path: str) -> dict[str, int]:
@@ -123,6 +124,7 @@ def detect_file_extensions(repo_path: str) -> dict[str, int]:
 
     return dict(sorted(extensions.items()))
 
+
 def read_repository_files(
     repo_path: str,
     files: list[str],
@@ -140,9 +142,7 @@ def read_repository_files(
     contents: dict[str, str] = {}
 
     for relative_path in files:
-        file_path = (
-            repo / relative_path
-        ).resolve()
+        file_path = (repo / relative_path).resolve()
 
         # Prevent path traversal.
         try:
@@ -157,11 +157,7 @@ def read_repository_files(
             continue
 
         try:
-            contents[relative_path] = (
-                file_path.read_text(
-                    encoding="utf-8"
-                )
-            )
+            contents[relative_path] = file_path.read_text(encoding="utf-8")
         except UnicodeDecodeError:
             continue
 

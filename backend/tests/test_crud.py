@@ -167,3 +167,28 @@ def test_update_task_status() -> None:
     assert updated.status == "running"
 
     db.close()
+
+
+def test_mark_interrupted_runs_failed() -> None:
+    db = get_test_db()
+
+    task = crud.create_task(
+        db,
+        TaskCreate(
+            repo_url="https://github.com/example/repo",
+            task_text="Fix tests",
+        ),
+    )
+
+    run = crud.create_run(db, task.id)
+    crud.update_task_status(db, task, "running")
+
+    count = crud.mark_interrupted_runs_failed(db)
+
+    assert count == 1
+    assert run.status == "failed"
+    assert run.error_msg == "Server restarted before this run completed."
+    assert run.completed_at is not None
+    assert task.status == "failed"
+
+    db.close()

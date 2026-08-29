@@ -4,15 +4,14 @@ from pydantic import BaseModel, Field
 class FileChange(BaseModel):
     """A single file modification proposed by the LLM."""
 
-    path: str = Field(
-        description="Path relative to the repository root."
-    )
+    path: str = Field(description="Path relative to the repository root.")
 
     content: str = Field(
-        min_length=1,
+        default="",
         description=(
             "Complete new content for the file. "
-            "Must not be empty."
+            "Empty content means the file must be left untouched "
+            "and will be skipped."
         ),
     )
 

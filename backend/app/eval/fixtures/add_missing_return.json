@@ -1,0 +1,6 @@
+{
+  "name": "add_missing_return",
+  "description": "Fix the square function in calculator.py. It computes the result but does not return it. Make all tests pass.",
+  "repo_url": "repos/add_missing_return",
+  "difficulty": "easy"
+}

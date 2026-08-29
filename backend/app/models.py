@@ -2,9 +2,9 @@ from datetime import datetime
 
 from sqlalchemy import DateTime, Float, ForeignKey, Integer, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.sql.functions import now
 
 from app.database import Base
+
 
 class Task(Base):
     """A coding task submitted by the user."""
@@ -46,6 +46,7 @@ class Task(Base):
         cascade="all, delete-orphan",
     )
 
+
 class Run(Base):
     """One attempt to complete a task. A task can have many runs."""
 
@@ -86,10 +87,7 @@ class Run(Base):
         nullable=True,
     )
 
-    error_msg: Mapped[str | None] = mapped_column(
-        String,
-        nullable=True
-    )
+    error_msg: Mapped[str | None] = mapped_column(String, nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
@@ -97,10 +95,7 @@ class Run(Base):
         default=func.now(),
     )
 
-    completed_at: Mapped[datetime | None] = mapped_column(
-        DateTime,
-        nullable=True
-    )
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
     task: Mapped["Task"] = relationship(
         "Task",
@@ -112,6 +107,7 @@ class Run(Base):
         back_populates="run",
         cascade="all, delete-orphan",
     )
+
 
 class RunLog(Base):
     """One log entry from the agent during a run. Many logs per run."""
@@ -144,6 +140,12 @@ class RunLog(Base):
     message: Mapped[str] = mapped_column(
         Text,
         nullable=False,
+    )
+
+    # Unified diff of the changes applied by the agent (modify step only).
+    diff: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True,
     )
 
     created_at: Mapped[datetime] = mapped_column(

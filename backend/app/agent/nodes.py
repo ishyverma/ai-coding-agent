@@ -16,7 +16,10 @@ from app.agent.modifier import apply_file_changes
 from app.agent.recovery import decide_retry
 from app.agent.repository import clone_repository
 from app.agent.state import AgentState
-from app.agent.command_policy import validate_test_command
+from app.agent.command_policy import resolve_test_command
+
+from app.config import settings
+
 
 def setup_repository_node(state: AgentState) -> AgentState:
     """Prepare the repository for the agent."""
@@ -27,14 +30,10 @@ def setup_repository_node(state: AgentState) -> AgentState:
         path = Path(repo_path).resolve()
 
         if not path.exists():
-            raise FileNotFoundError(
-                f"Repository path does not exist: {repo_path}"
-            )
+            raise FileNotFoundError(f"Repository path does not exist: {repo_path}")
 
         if not path.is_dir():
-            raise NotADirectoryError(
-                f"Repository path is not a directory: {repo_path}"
-            )
+            raise NotADirectoryError(f"Repository path is not a directory: {repo_path}")
 
         return {
             **state,
@@ -46,7 +45,7 @@ def setup_repository_node(state: AgentState) -> AgentState:
 
     cloned_path = clone_repository(
         repo_url=repo_url,
-        base_dir="/tmp/agent-repos",
+        base_dir=settings.agent_repo_work_dir,
     )
 
     return {
@@ -54,6 +53,7 @@ def setup_repository_node(state: AgentState) -> AgentState:
         "repo_path": str(cloned_path),
         "attempt_count": 0,
     }
+
 
 def inspect_repository_node(
     state: AgentState,
@@ -67,11 +67,7 @@ def inspect_repository_node(
     important_files = find_important_files(repo_path)
     extensions = detect_file_extensions(repo_path)
 
-    relevant_files = list(
-        dict.fromkeys(
-            important_files + test_files
-        )
-    )
+    relevant_files = list(dict.fromkeys(test_files + important_files))
 
     contents = read_repository_files(
         repo_path,
@@ -86,22 +82,38 @@ def inspect_repository_node(
         "file_extensions": extensions,
         "repository_contents": contents,
     }
-    """Inspect the cloned repository."""
 
-    repo_path = state["repo_path"]
 
-    files = list_repository_files(repo_path)
-    test_files = find_test_files(repo_path)
-    important_files = find_important_files(repo_path)
-    extensions = detect_file_extensions(repo_path)
+def _truncate_repository_contents(
+    contents: dict[str, str],
+    limit: int = 12_000,
+) -> str:
+    """
+    Build a compact representation of repository contents.
 
-    return {
-        **state,
-        "repository_files": files,
-        "test_files": test_files,
-        "important_files": important_files,
-        "file_extensions": extensions,
-    }
+    Large repositories produce prompts that exceed the LLM provider's
+    token limit, so the content is capped at ``limit`` characters
+    (test files first, then project files).
+    """
+
+    parts: list[str] = []
+    used = 0
+
+    for path, content in contents.items():
+        available = limit - used
+
+        if available <= 0:
+            break
+
+        block = f"--- {path} ---\n{content}"
+
+        if len(block) > available:
+            block = block[:available]
+
+        parts.append(block)
+        used += len(block)
+
+    return "\n\n".join(parts)
 
 
 def analyze_task_node(
@@ -109,22 +121,17 @@ def analyze_task_node(
 ) -> AgentState:
     """Ask the LLM to analyze the coding task."""
 
-    files = "\n".join(
-        state.get("repository_files", [])
-    )
-
-    repository_contents = "\n\n".join(
-        f"--- {path} ---\n{content}"
-        for path, content in state.get(
+    repository_contents = _truncate_repository_contents(
+        state.get(
             "repository_contents",
             {},
-        ).items()
+        )
     )
 
     previous_test_output = state.get(
-    "test_output",
-    "",
-)
+        "test_output",
+        "",
+    )
 
     prompt = f"""
 You are an expert software engineer.
@@ -192,7 +199,11 @@ Rules:
 - Never use ../.
 - Return complete file contents.
 - Only modify files necessary to solve the task.
-- Use pytest for Python projects when appropriate.
+- Never include a file with empty content; if a file needs no
+  change, omit it from the plan entirely.
+- Choose the test command to match the project language:
+  Python -> "pytest -q", Go -> "go test ./...",
+  Node/TypeScript -> "npm test", Rust -> "cargo test".
 """
 
     plan = generate_code_change_plan(prompt)
@@ -203,6 +214,7 @@ Rules:
             "content": change.content,
         }
         for change in plan.changes
+        if change.path.strip() and change.content.strip()
     ]
 
     apply_file_changes(
@@ -210,8 +222,9 @@ Rules:
         changes=changes,
     )
 
-    test_command = validate_test_command(
-        plan.test_command
+    test_command = resolve_test_command(
+        plan.test_command,
+        state.get("repository_files", []),
     )
 
     return {
@@ -219,6 +232,7 @@ Rules:
         "test_command": test_command,
         "proposed_changes": str(changes),
     }
+
 
 def run_tests_node(
     state: AgentState,
@@ -239,10 +253,7 @@ def run_tests_node(
     output = result.stdout
 
     if result.stderr:
-        output += (
-            "\n\nSTDERR:\n"
-            + result.stderr
-        )
+        output += "\n\nSTDERR:\n" + result.stderr
 
     return {
         **state,
@@ -251,33 +262,8 @@ def run_tests_node(
         "attempt_count": state.get(
             "attempt_count",
             0,
-        ) + 1,
-    }
-    """Run the repository's test command."""
-
-    command = state.get(
-        "test_command",
-        "pytest -q",
-    )
-
-    result = run_command(
-        repo_path=state["repo_path"],
-        command=command,
-        timeout=60,
-    )
-
-    output = result.stdout
-
-    if result.stderr:
-        output += (
-            "\n\nSTDERR:\n"
-            + result.stderr
         )
-
-    return {
-        **state,
-        "test_output": output,
-        "tests_passed": result.passed,
+        + 1,
     }
 
 
@@ -300,25 +286,6 @@ def recovery_node(
 
     return {
         **state,
-        "error": decision.reason,
-    }
-    """Decide whether another attempt is allowed."""
-
-    decision = decide_retry(
-        tests_passed=state.get(
-            "tests_passed",
-            False,
-        ),
-        current_attempt=state.get(
-            "attempt_count",
-            0,
-        ),
-        max_attempts=state["max_attempts"],
-    )
-
-    return {
-        **state,
-        "attempt_count": decision.next_attempt,
         "error": decision.reason,
     }
 

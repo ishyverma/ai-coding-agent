@@ -41,3 +41,8 @@ Thumbs.db
 
 # Agent work dir
 /tmp/agent-repos/
+
+# Embedded git repos for eval fixtures
+backend/app/eval/fixtures/repos/
+.playwright-cli/
+.codegraph/

@@ -31,9 +31,7 @@ def test_run_command_captures_stderr(tmp_path: Path) -> None:
     result = run_command(
         repo_path=str(tmp_path),
         command=(
-            "python -c "
-            "\"import sys; "
-            "print('error message', file=sys.stderr)\""
+            "python -c " '"import sys; ' "print('error message', file=sys.stderr)\""
         ),
     )
 
@@ -44,10 +42,7 @@ def test_run_command_captures_stderr(tmp_path: Path) -> None:
 def test_run_command_timeout(tmp_path: Path) -> None:
     result = run_command(
         repo_path=str(tmp_path),
-        command=(
-            "python -c "
-            "\"import time; time.sleep(2)\""
-        ),
+        command=("python -c " '"import time; time.sleep(2)"'),
         timeout=1,
     )
 
@@ -67,9 +62,7 @@ def test_invalid_repository_path(tmp_path: Path) -> None:
     except FileNotFoundError:
         pass
     else:
-        raise AssertionError(
-            "Expected FileNotFoundError"
-        )
+        raise AssertionError("Expected FileNotFoundError")
 
 
 def test_run_pytest_inside_repository(

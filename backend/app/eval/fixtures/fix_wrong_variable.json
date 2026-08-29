@@ -1,0 +1,6 @@
+{
+  "name": "fix_wrong_variable",
+  "description": "Fix the NameError in string_utils.py. The reverse_string function returns the wrong variable name. Make all tests pass.",
+  "repo_url": "repos/fix_wrong_variable",
+  "difficulty": "easy"
+}
