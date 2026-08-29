@@ -33,13 +33,24 @@ def _migrate_run_logs_diff() -> None:
     """Add the ``diff`` column to an existing ``run_logs`` table if missing."""
 
     with engine.connect() as connection:
-        columns = {
-            row[1] for row in connection.exec_driver_sql("PRAGMA table_info(run_logs)")
-        }
+        dialect = engine.dialect.name
 
-        if "diff" not in columns:
-            connection.exec_driver_sql("ALTER TABLE run_logs ADD COLUMN diff TEXT")
-            connection.commit()
+        if dialect == "sqlite":
+            columns = {
+                row[1] for row in connection.exec_driver_sql("PRAGMA table_info(run_logs)")
+            }
+            if "diff" not in columns:
+                connection.exec_driver_sql("ALTER TABLE run_logs ADD COLUMN diff TEXT")
+                connection.commit()
+        else:
+            # PostgreSQL / other: use information_schema
+            result = connection.exec_driver_sql(
+                "SELECT column_name FROM information_schema.columns "
+                "WHERE table_name = 'run_logs' AND column_name = 'diff'"
+            )
+            if result.fetchone() is None:
+                connection.exec_driver_sql("ALTER TABLE run_logs ADD COLUMN diff TEXT")
+                connection.commit()
 
 
 def _mark_interrupted_runs_failed() -> None:
