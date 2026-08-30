@@ -115,18 +115,6 @@ def create_app() -> FastAPI:
 
         return {"status": "ok", "version": "1.0.0", "env": settings.app_env}
 
-    @app.post("/admin/clear-db", tags=["admin"])
-    def clear_database() -> dict[str, str]:
-        """Temporary endpoint to clear all data from the database."""
-        from sqlalchemy import text
-
-        tables = ["run_logs", "eval_results", "runs", "tasks"]
-        with engine.connect() as conn:
-            for table in tables:
-                conn.execute(text(f"DELETE FROM {table}"))
-            conn.commit()
-        return {"status": "ok", "message": "All tables cleared"}
-
     return app
 
 
