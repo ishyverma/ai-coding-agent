@@ -81,8 +81,30 @@ def run_command(
 
     env = os.environ.copy()
     env["PYTHONDONTWRITEBYTECODE"] = "1"
+
+    # Build a PATH that includes the active Python interpreter's bin dir plus
+    # well-known locations for npm/node, go, cargo, and other language runtimes
+    # so the agent can run test commands regardless of how the server was started.
     python_bin_dir = str(Path(sys.executable).resolve().parent)
-    env["PATH"] = f"{python_bin_dir}{os.pathsep}{env.get('PATH', '')}"
+    extra_paths = [
+        python_bin_dir,
+        # Node / npm / npx
+        "/usr/local/bin",
+        "/usr/bin",
+        "/bin",
+        # Go
+        "/usr/local/go/bin",
+        "/usr/local/sbin",
+        # Rust / cargo (user-level install)
+        str(Path.home() / ".cargo" / "bin"),
+        # Homebrew (Apple Silicon)
+        "/opt/homebrew/bin",
+        # Homebrew (Intel)
+        "/usr/local/opt/node/bin",
+    ]
+    existing_path = env.get("PATH", "")
+    combined = os.pathsep.join(p for p in extra_paths if p not in existing_path.split(os.pathsep))
+    env["PATH"] = f"{combined}{os.pathsep}{existing_path}" if existing_path else combined
     resolved_command = _portable_command(command)
 
     try:

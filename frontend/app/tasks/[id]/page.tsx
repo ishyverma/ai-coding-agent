@@ -137,49 +137,22 @@ export default function TaskDetailPage() {
               </CardContent>
             </Card>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-2">
               {runs.map((run) => (
-                <Card key={run.id}>
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium">Run #{run.id}</p>
-                        <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                          {new Date(run.created_at).toLocaleString()}
-                        </p>
-                      </div>
-                      <RunStatusBadge status={run.status} />
-                    </div>
-                    <dl className="mt-4 grid grid-cols-2 gap-3 text-xs">
-                      <div>
-                        <dt className="text-muted-foreground">Attempts</dt>
-                        <dd className="mt-1 font-medium">{run.attempts}</dd>
-                      </div>
-                      <div>
-                        <dt className="text-muted-foreground">Tokens</dt>
-                        <dd className="mt-1 font-medium">
-                          {run.tokens_used.toLocaleString()}
-                        </dd>
-                      </div>
-                      <div>
-                        <dt className="text-muted-foreground">Duration</dt>
-                        <dd className="mt-1 font-medium">
-                          {run.duration_s != null
-                            ? `${run.duration_s}s`
-                            : "Pending"}
-                        </dd>
-                      </div>
-                      <div>
-                        <dt className="text-muted-foreground">Completed</dt>
-                        <dd className="mt-1 font-medium">
-                          {run.completed_at
-                            ? new Date(run.completed_at).toLocaleTimeString()
-                            : "Pending"}
-                        </dd>
-                      </div>
-                    </dl>
-                  </CardContent>
-                </Card>
+                <div
+                  key={run.id}
+                  className="rounded-md border border-border px-3 py-2.5 hover:bg-muted/50"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-medium">Run #{run.id}</p>
+                    <RunStatusBadge status={run.status} />
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {run.tokens_used.toLocaleString()} tokens ·
+                    {" "}{run.duration_s != null ? `${run.duration_s}s` : "pending"} ·
+                    {" "}{new Date(run.created_at).toLocaleDateString()}
+                  </p>
+                </div>
               ))}
             </div>
           )}
