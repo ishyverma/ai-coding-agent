@@ -1,6 +1,11 @@
 # Simple single-stage Dockerfile for Railway
-ARG CACHE_BUST=2026-08-30-2
 FROM python:3.11-slim
+
+# Cache-busting: this label changes when CACHE_BUST arg changes,
+# invalidating all subsequent layers
+ARG CACHE_BUST=unknown
+LABEL cache_bust=${CACHE_BUST}
+RUN echo "Cache bust: ${CACHE_BUST}" > /tmp/.cache_bust
 
 # Install system dependencies (needed for gitpython and SQLAlchemy)
 RUN apt-get update && apt-get install -y --no-install-recommends \
