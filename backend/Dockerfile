@@ -4,7 +4,18 @@ FROM python:3.11-slim
 # Install system dependencies (needed for gitpython and SQLAlchemy)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
+    curl \
     && rm -rf /var/lib/apt/lists/*
+
+# Install Go for running Go test commands
+RUN curl -fsSL https://go.dev/dl/go1.23.4.linux-amd64.tar.gz | tar -C /usr/local -xz
+
+# Install Node.js / npm for running npm test commands
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y nodejs \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV PATH="/usr/local/go/bin:${PATH}"
 
 # Set working directory
 WORKDIR /app
