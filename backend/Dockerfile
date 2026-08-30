@@ -1,4 +1,5 @@
 # Simple single-stage Dockerfile for Railway
+ARG CACHE_BUST=2026-08-30-2
 FROM python:3.11-slim
 
 # Install system dependencies (needed for gitpython and SQLAlchemy)
@@ -31,6 +32,6 @@ COPY . .
 RUN useradd -m -u 1001 appuser && chown -R appuser:appuser /app
 USER appuser
 
-# Railway sets PORT automatically — we read it with $PORT
+# Railway sets PORT automatically
 EXPOSE 8000
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
