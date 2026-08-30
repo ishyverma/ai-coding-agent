@@ -1,8 +1,11 @@
-# Simple single-stage Dockerfile for Railway
-ARG CACHE_BUST=2026-08-30-2
+# Standalone Dockerfile for backend-only Railway deployment
 FROM python:3.11-slim
 
-# Install system dependencies (needed for gitpython and SQLAlchemy)
+# Cache-bust: Railway passes RAILWAY_DEPLOYMENT_ID as this arg
+ARG CACHE_BUST=unknown
+LABEL cache_bust=${CACHE_BUST}
+
+# Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     curl \
@@ -34,4 +37,4 @@ USER appuser
 
 # Railway sets PORT automatically
 EXPOSE 8000
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --workers 1"]
